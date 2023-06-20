@@ -39,8 +39,17 @@
 #include <sys/mount.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#if LINUX
+#include <time.h>
+#endif
 
+#if !LINUX
 #include <IOKit/storage/IOMediaBSDClient.h>
+#endif
+
+#if LINUX
+#include "missing.h"
+#endif
 
 #include <hfs/hfs_format.h>
 #include "newfs_hfs.h"
@@ -202,8 +211,10 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch;
+#if !LINUX
 	char *cp, *special;
 	struct statfs *mp;
+#endif
 	int n;
 	
 	if ((progname = strrchr(*argv, '/')))
@@ -360,6 +371,9 @@ main(argc, argv)
 		if (argc != 1)
 			usage();
 
+#if LINUX
+		(void) sprintf(blkdevice, "%s", argv[0]);
+#else
 		special = argv[0];
 		cp = strrchr(special, '/');
 		if (cp != 0)
@@ -368,12 +382,16 @@ main(argc, argv)
 			special++;
 		(void) snprintf(rawdevice, sizeof(rawdevice), "%sr%s", _PATH_DEV, special);
 		(void) snprintf(blkdevice, sizeof(blkdevice), "%s%s", _PATH_DEV, special);
+#endif
 	}
 
 	if (gPartitionSize == 0) {
 		/*
 		 * Check if target device is aready mounted
 		 */
+#if LINUX
+		//FIXME
+#else
 		n = getmntinfo(&mp, MNT_NOWAIT);
 		if (n == 0)
 			fatal("%s: getmntinfo: %s", blkdevice, strerror(errno));
@@ -383,10 +401,14 @@ main(argc, argv)
 				fatal("%s is mounted on %s", blkdevice, mp->f_mntonname);
 			++mp;
 		}
+#endif
 	}
-
-	if (hfs_newfs(rawdevice) < 0) {
+	if (hfs_newfs(blkdevice) < 0) {
+#if LINUX
+		err(1, "cannot create filesystem on %s", blkdevice);
+#else
 		err(1, "cannot create filesystem on %s", rawdevice);
+#endif
 	}
 
 	exit(0);
@@ -863,8 +885,10 @@ hfs_newfs(char *device)
 	int fso = -1;
 	int retval = 0;
 	hfsparams_t defaults = {0};
+#if !LINUX
 	UInt64 maxPhysPerIO = 0;
-	
+#endif
+
 	if (gPartitionSize) {
 		dip.sectorSize = kBytesPerSector;
 		dip.physTotalSectors = dip.totalSectors = gPartitionSize / kBytesPerSector;
@@ -881,14 +905,43 @@ hfs_newfs(char *device)
 		}
 
 		dip.fd = fso;
+#if !LINUX
 		fcntl(fso, F_NOCACHE, 1);
-
+#endif
 		if (fso < 0)
 			fatal("%s: %s", device, strerror(errno));
 
 		if (fstat( fso, &stbuf) < 0)
 			fatal("%s: %s", device, strerror(errno));
 
+#if LINUX
+		dip.sectorSize = 512;
+		dip.physSectorSize = 512;
+		dip.physSectorsPerIO = 1;
+#ifndef        BLKGETSIZE
+#define        BLKGETSIZE              _IO(0x12,96)
+#endif
+#ifndef        BLKGETSIZE64
+#define BLKGETSIZE64           _IOR(0x12,114,size_t)
+#endif
+        
+		if (S_ISREG(stbuf.st_mode)) {
+			dip.totalSectors = stbuf.st_size / 512;
+		} 
+		else if (S_ISBLK(stbuf.st_mode)) {
+			unsigned long size;
+			u_int64_t size64;
+			if (!ioctl(fso, BLKGETSIZE64, &size64))
+				dip.totalSectors = size64 / 512;
+			else if (!ioctl(fso, BLKGETSIZE, &size))
+				dip.totalSectors = size;
+			else
+				fatal("%s: %s", device, strerror(errno));
+		} 
+		else
+			fatal("%s: is not a block device", device);
+	}
+#else
 		if (ioctl(fso, DKIOCGETBLOCKSIZE, &dip.physSectorSize) < 0)
 			fatal("%s: %s", device, strerror(errno));
 
@@ -928,6 +981,7 @@ hfs_newfs(char *device)
 
 	dip.sectorSize = kBytesPerSector;
 	dip.totalSectors = dip.physTotalSectors * dip.physSectorSize / dip.sectorSize;
+#endif
 
 	dip.sectorOffset = 0;
 	time(&createtime);

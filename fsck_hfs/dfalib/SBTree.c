@@ -102,7 +102,7 @@ OSErr SearchBTreeRecord(SFCB *fcb, const void* key, UInt32 hint, void* foundKey,
 			CopyMemory(&resultIterator->key, foundKey, CalcKeySize(btcb, &resultIterator->key));	//¥¥ warning, this could overflow user's buffer!!!
 
 		if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, *dataSize) )
-			DebugStr("\pSearchBTreeRecord: bad record?");
+			DebugStr("SearchBTreeRecord: bad record?");
 	}
 
 ErrorExit:
@@ -210,7 +210,7 @@ OSErr GetBTreeRecord(SFCB *fcb, SInt16 selectionIndex, void* key, void* data, UI
 		CopyMemory(&iterator->key, key, CalcKeySize(btcb, &iterator->key));	//¥¥ warning, this could overflow user's buffer!!!
 		
 		if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, *dataSize) )
-			DebugStr("\pGetBTreeRecord: bad record?");
+			DebugStr("GetBTreeRecord: bad record?");
 
 	}
 	
@@ -242,7 +242,7 @@ OSErr InsertBTreeRecord(SFCB *fcb, const void* key, const void* data, UInt16 dat
 	CopyMemory(key, &iterator.key, CalcKeySize(btcb, (BTreeKey *) key));	//¥¥ should we range check against maxkeylen?
 
 	if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, dataSize) )
-		DebugStr("\pInsertBTreeRecord: bad record?");
+		DebugStr("InsertBTreeRecord: bad record?");
 
 	result = BTInsertRecord( fcb, &iterator, &btRecord, dataSize );
 
@@ -304,7 +304,7 @@ OSErr ReplaceBTreeRecord(SFCB *fcb, const void* key, UInt32 hint, void *newData,
 	CopyMemory(key, &iterator.key, CalcKeySize(btcb, (BTreeKey *) key));		//¥¥ should we range check against maxkeylen?
 
 	if ( DEBUG_BUILD && !ValidHFSRecord(newData, btcb, dataSize) )
-		DebugStr("\pReplaceBTreeRecord: bad record?");
+		DebugStr("ReplaceBTreeRecord: bad record?");
 
 	result = BTReplaceRecord( fcb, &iterator, &btRecord, dataSize );
 
@@ -321,7 +321,9 @@ ErrorExit:
 OSStatus
 SetEndOfForkProc ( SFCB *filePtr, FSSize minEOF, FSSize maxEOF )
 {
+#if !LINUX
 #pragma unused (maxEOF)
+#endif
 
 	OSStatus	result;
 	UInt32		actualSectorsAdded;
@@ -341,7 +343,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize minEOF, FSSize maxEOF )
 	else
 	{
 		if ( DEBUG_BUILD )
-			DebugStr("\pSetEndOfForkProc: minEOF is smaller than current size!");
+			DebugStr("SetEndOfForkProc: minEOF is smaller than current size!");
 		return -1;
 	}
 
@@ -367,7 +369,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize minEOF, FSSize maxEOF )
 	//	Make sure we got at least as much space as we needed
 	//
 	if (filePtr->fcbLogicalSize < minEOF) {
-		Panic("\pSetEndOfForkProc: disk too full to extend B-tree file");
+		Panic("SetEndOfForkProc: disk too full to extend B-tree file");
 		return dskFulErr;
 	}
 	
@@ -439,7 +441,7 @@ static OSErr CheckBTreeKey(const BTreeKey *key, const BTreeControlBlock *btcb)
 	if ( (keyLen < 6) || (keyLen > btcb->maxKeyLength) )
 	{
 		if ( DEBUG_BUILD )
-			DebugStr("\pCheckBTreeKey: bad key length!");
+			DebugStr("CheckBTreeKey: bad key length!");
 		return fsBTInvalidKeyLengthErr;
 	}
 	

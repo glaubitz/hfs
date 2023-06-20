@@ -31,9 +31,15 @@
 
 #include "Scavenger.h"
 
+#if !LINUX
 #include <sys/disk.h>
+#endif
 
+#if !LINUX
 #include <bitstring.h>
+#else
+#include <bsd/bitstring.h>
+#endif
 
 #define	bit_dealloc(p)	free(p)
 
@@ -1080,18 +1086,23 @@ int AllocateContigBitmapBits (SVCB *vcb, UInt32 numBlocks, UInt32 *actualStartBl
 	return error;
 }
 
+#if !LINUX
 enum { kMaxTrimExtents = 256 };
 dk_extent_t gTrimExtents[kMaxTrimExtents];
 dk_unmap_t gTrimData;
+#endif
 
 static void TrimInit(void)
 {
+#if !LINUX
 	bzero(&gTrimData, sizeof(gTrimData));
 	gTrimData.extents = gTrimExtents;
+#endif
 }
 
 static void TrimFlush(void)
 {
+#if !LINUX
 	int err;
 	
 	if (gTrimData.extentsCount == 0)
@@ -1106,10 +1117,12 @@ static void TrimFlush(void)
 		DPRINTF(d_error|d_trim, "TrimFlush: error %d\n", errno);
 	}
 	gTrimData.extentsCount = 0;
+#endif
 }
 
 static void TrimExtent(SGlobPtr g, UInt32 startBlock, UInt32 blockCount)
 {
+#if !LINUX
 	UInt64 offset;
 	UInt64 length;
 	
@@ -1126,6 +1139,7 @@ static void TrimExtent(SGlobPtr g, UInt32 startBlock, UInt32 blockCount)
 	gTrimExtents[gTrimData.extentsCount].length = length;
 	if (++gTrimData.extentsCount == kMaxTrimExtents)
 		TrimFlush();
+#endif
 }
 
 /* Function: TrimFreeBlocks
@@ -1140,6 +1154,7 @@ static void TrimExtent(SGlobPtr g, UInt32 startBlock, UInt32 blockCount)
  */
 void TrimFreeBlocks(SGlobPtr g)
 {
+#if !LINUX
 	UInt32 *buffer;
 	UInt32 bit;
 	UInt32 wordWithinSegment;
@@ -1237,6 +1252,7 @@ void TrimFreeBlocks(SGlobPtr g)
 	
 	TrimFlush();
 	DPRINTF(d_info|d_trim, "Trimmed %u allocation blocks.\n", totalTrimmed);
+#endif
 }
 
 /* Function: IsTrimSupported
@@ -1250,6 +1266,9 @@ void TrimFreeBlocks(SGlobPtr g)
  */
 int IsTrimSupported(void)
 {
+#if LINUX
+	return 0;
+#else
 	int err;
     uint32_t features = 0;
 	
@@ -1261,6 +1280,7 @@ int IsTrimSupported(void)
 	}
 	
 	return features & DK_FEATURE_UNMAP;
+#endif
 }
 
 /*

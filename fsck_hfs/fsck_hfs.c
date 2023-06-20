@@ -23,15 +23,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#if !LINUX
 #include <sys/ucred.h>
+#endif
 #include <sys/mount.h>
 #include <sys/ioctl.h>
+#if !LINUX
 #include <sys/disk.h>
 #include <sys/sysctl.h>
-#include <err.h>
 #include <setjmp.h>
+#endif
+
+#include <err.h>
 
 #include <hfs/hfs_mount.h>
+
+#if LINUX
+#include <mntent.h>
+#include <linux/fs.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -42,7 +52,9 @@
 #include <ctype.h>
 #include <signal.h>
 
+#if !LINUX
 #include <TargetConditionals.h>
+#endif
 
 #include "fsck_hfs.h"
 #include "fsck_msgnums.h"
@@ -234,6 +246,7 @@ main(argc, argv)
 			yflag = 0;
 			break;
 
+		case 'a':
 		case 'p':
 			preen++;
 			break;
@@ -279,13 +292,15 @@ main(argc, argv)
 				}
 				break;
 			}
-
+		case 'v':
+			fprintf(stderr, "%s: version %s\n", progname, VERSION);
+			exit(0);
+			break;
 		case 'y':
 			yflag++;
 			nflag = 0;
 			break;
-
-		case 'u':
+		case 'u':			
 		case '?':
 		default:
 			usage();
@@ -303,10 +318,12 @@ main(argc, argv)
 	
 	if (guiControl)
 		debug = 0; /* debugging is for command line only */
-
+#if LINUX
+// FIXME
+#else
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void)signal(SIGINT, catch);
-
+#endif
 	if (argc < 1) {
 		(void) fplog(stderr, "%s: missing special-device\n", progname);
 		usage();
@@ -341,7 +358,12 @@ mountpoint(const char *cdev)
 	char *unraw = NULL;
 	int result;
 	int i;
-    
+
+#if LINUX
+	FILE *fp = fopen("/proc/self/mounts", "r");
+	struct mntent *mntent;
+#endif
+
     if (detonator_run)
         return NULL;
 
@@ -351,6 +373,14 @@ mountpoint(const char *cdev)
 	if (unraw == NULL)
 		goto done;
 
+#if LINUX
+	while ((mntent = getmntent(fp))) {
+		if (strcmp(unraw, mntent->mnt_fsname) == 0) {
+			retval = strdup(mntent->mnt_dir);
+			break;
+		}
+	}
+#else
 	result = getmntinfo(&fsinfo, MNT_NOWAIT);
 
 	for (i = 0; i < result; i++) {
@@ -359,6 +389,7 @@ mountpoint(const char *cdev)
 			break;
 		}
 	}
+#endif
 
 done:
 	if (unraw)
@@ -397,6 +428,9 @@ checkfilesys(char * filesys)
 		mntonname = strdup("/");
 	}
 
+#if LINUX
+        // FIXME
+#else
 	if (lflag && !detonator_run) {
 		struct stat fs_stat;
 
@@ -460,7 +494,7 @@ checkfilesys(char * filesys)
 			}
 		}
 	}
-
+#endif
 	if (debug && preen)
 		pwarn("starting\n");
 	
@@ -575,6 +609,9 @@ checkfilesys(char * filesys)
 			}
 		}
 	} else {
+#if LINUX
+		// FIXME
+#else
 		struct statfs stfs_buf;
 
 		/*
@@ -585,8 +622,8 @@ checkfilesys(char * filesys)
 		else
 			flags = 0;
 		ckfini(flags & MNT_RDONLY);
+#endif
 	}
-
 	/* XXX free any allocated memory here */
 
 	if (hotmount && fsmodified) {
@@ -597,6 +634,9 @@ checkfilesys(char * filesys)
 		 */
 		if (!preen)
 			fsckPrint(context, fsckVolumeModified);
+#if LINUX
+		// FIXME
+#else
 		if (flags & MNT_RDONLY) {
 			bzero(&args, sizeof(args));
 			flags |= MNT_UPDATE | MNT_RELOAD;
@@ -611,6 +651,7 @@ checkfilesys(char * filesys)
 					fprintf(stderr, "update/reload mount for %s failed: %s\n", mntonname, strerror(errno));
 			}
 		}
+#endif
 		if (!preen)
 			plog("\n***** REBOOT NOW *****\n");
 		sync();
@@ -662,11 +703,13 @@ setup( char *dev, int *canWritePtr )
             plog("Can't stat %s: %s\n", dev, strerror(errno));
             return (0);
         }
+#if !LINUX
         if ((statb.st_mode & S_IFMT) != S_IFCHR) {
             pfatal("%s is not a character device", dev);
             if (reply("CONTINUE") == 0)
                 return (0);
         }
+#endif
         /* Always attempt to replay the journal */
         if (!nflag && !quick) {
             // We know we have a character device by now.
@@ -684,7 +727,11 @@ setup( char *dev, int *canWritePtr )
         if (nflag == 0 && quick == 0) {
             getWriteAccess( dev, canWritePtr );
         }
-	
+
+#if LINUX
+#define O_EXLOCK 0
+#endif
+
         if (nflag || quick || (fswritefd = open(dev, O_RDWR | (hotmount ? 0 : O_EXLOCK))) < 0) {
             fswritefd = -1;
             if (preen) {
@@ -739,7 +786,11 @@ setup( char *dev, int *canWritePtr )
 	}
 
 	/* Get device block size to initialize cache */
+#if LINUX
+	if (ioctl(fsreadfd, BLKBSZGET, &devBlockSize) < 0) {
+#else
 	if (ioctl(fsreadfd, DKIOCGETBLOCKSIZE, &devBlockSize) < 0) {
+#endif
 		pfatal ("Can't get device block size\n");
 		return (0);
 	}
@@ -767,6 +818,7 @@ setup( char *dev, int *canWritePtr )
 		size_t dsize = sizeof(memSize);
 		int rv;
 
+#if !LINUX
 		rv = sysctlbyname("hw.memsize", &memSize, &dsize, NULL, 0);
 		if (rv == -1) {
 			(void)fplog(stderr, "sysctlbyname failed, not auto-setting cache size\n");
@@ -786,6 +838,7 @@ setup( char *dev, int *canWritePtr )
             }
 			reqCacheSize = memSize / d;
 		}
+#endif
 	}
 	
 	CalculateCacheSizes(reqCacheSize, &cacheBlockSize, &cacheTotalBlocks, debug);
@@ -812,11 +865,15 @@ setup( char *dev, int *canWritePtr )
 
 static void getWriteAccess( char *dev, int *canWritePtr )
 {
+#if !LINUX
 	int					i;
 	int					myMountsCount;
+#endif
 	void *				myPtr;
 	char *				myCharPtr;
+#if !LINUX
 	struct statfs *			myBufPtr;
+#endif
 	void *				myNamePtr;
 	int				blockDevice_fd = -1;
 
@@ -840,6 +897,9 @@ static void getWriteAccess( char *dev, int *canWritePtr )
 	}
 	
 	// get count of mounts then get the info for each 
+#if LINUX
+	// FIXME
+#else
 	myMountsCount = getfsstat( NULL, 0, MNT_NOWAIT );
 	if ( myMountsCount < 0 )
 		goto ExitThisRoutine;
@@ -863,8 +923,8 @@ static void getWriteAccess( char *dev, int *canWritePtr )
 		}
 		myBufPtr++;
 	}
+#endif
 	*canWritePtr = 1;  // single user will get us here, f_mntfromname is not /dev/diskXXXX 
-	
 ExitThisRoutine:
 	if ( myPtr != NULL )
 		free( myPtr );
@@ -902,6 +962,7 @@ usage()
 	(void) fplog(stderr, "  r = rebuild catalog btree \n");
 	(void) fplog(stderr, "  S = Scan disk for bad blocks\n");
 	(void) fplog(stderr, "  u = usage \n");
+	(void) fplog(stderr, "  v = version\n");
 	(void) fplog(stderr, "  y = assume a yes response \n");
 	
 	exit(1);
@@ -943,12 +1004,14 @@ ScanDisk(int fd)
 	size_t bufSize = 1024 * 1024;
 	ssize_t nread;
 	off_t curPos = 0;
+#if !LINUX
 	void (*oldhandler)(int);
+#endif
 	uint32_t numErrors = 0;
 	uint32_t maxErrors = 40;	// Something more variable?
-
+#if !LINUX
 	oldhandler = signal(SIGINFO, &siginfo);
-
+#endif
 #define PRSTAT \
 	do { \
 		if (diskSize) { \
@@ -960,14 +1023,25 @@ ScanDisk(int fd)
 		printStatus = 0; \
 	} while (0)
 
+#if LINUX
+	if (ioctl(fd, BLKBSZGET, &devBlockSize) == -1) {
+#else
 	if (ioctl(fd, DKIOCGETBLOCKSIZE, &devBlockSize) == -1) {
+#endif
 		devBlockSize = 512;
 	}
 
+#if LINUX
+	if (ioctl(fd, BLKGETSIZE64, &devBlockTotal) == -1) {
+		diskSize = 0;
+	} else
+		diskSize = devBlockTotal;
+#else
 	if (ioctl(fd, DKIOCGETBLOCKCOUNT, &devBlockTotal) == -1) {
 		diskSize = 0;
 	} else
 		diskSize = devBlockTotal * devBlockSize;
+#endif
 
 	while (buffer == NULL && bufSize >= devBlockSize) {
 		buffer = malloc(bufSize);
@@ -1049,7 +1123,9 @@ loop:
 done:
 	if (buffer)
 		free(buffer);
+#if !LINUX
 	signal(SIGINFO, oldhandler);
+#endif
 	return;
 
 }

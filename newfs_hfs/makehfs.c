@@ -32,11 +32,22 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#if LINUX
+#include <time.h>
+#include "missing.h"
+#endif
 #include <err.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
+#if !LINUX
 #include <sys/sysctl.h>
+#else
+#include <linux/sysctl.h>
+#endif
+
+#if !LINUX
 #include <sys/vmmeter.h>
+#endif
 
 #include <err.h>
 #include <errno.h>
@@ -47,11 +58,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#if !LINUX
 #include <wipefs.h>
+#endif
 
-#include <TargetConditionals.h>
-
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE || LINUX
 
 // CoreServices is not available, so...
 
@@ -86,6 +97,7 @@ enum {
  * with OpenSSL, so we don't have to change the code.
  */
 #define COMMON_DIGEST_FOR_OPENSSL
+#if !LINUX
 #include <CommonCrypto/CommonDigest.h>
 
 #include <libkern/OSByteOrder.h>
@@ -98,7 +110,9 @@ enum {
 #include <TargetConditionals.h>
 
 extern Boolean _CFStringGetFileSystemRepresentation(CFStringRef string, UInt8 *buffer, CFIndex maxBufLen);
-
+#else
+#include <openssl/sha.h>
+#endif
 
 #include <hfs/hfs_format.h>
 #include <hfs/hfs_mount.h>
@@ -169,7 +183,9 @@ static void WriteBuffer __P((const DriveInfo *driveInfo, UInt64 startingSector,
 		UInt64 byteCount, const void *buffer));
 static UInt32 Largest __P((UInt32 a, UInt32 b, UInt32 c, UInt32 d ));
 
+#if !LINUX
 static UInt32 GetDefaultEncoding();
+#endif
 
 static UInt32 UTCToLocal __P((UInt32 utcTime));
 
@@ -194,6 +210,9 @@ void SETOFFSET (void *buffer, UInt16 btNodeSize, SInt16 recOffset, SInt16 vecOff
 
 #define ROUNDUP(x, u)	(((x) % (u) == 0) ? (x) : ((x)/(u) + 1) * (u))
 
+#if LINUX
+#define ENCODING_TO_BIT(e)       (e)
+#else
 #if TARGET_OS_IPHONE
 #define ENCODING_TO_BIT(e)				 \
 	  ((e) < 48 ? (e) : 0)
@@ -212,6 +231,7 @@ struct cp_root_xattr {
 	u_int64_t reserved2;
 	u_int8_t reserved3[16];
 } __attribute__((aligned(2), packed)); 
+#endif
 #endif
 
 /*
@@ -322,6 +342,7 @@ createExtents(HFSPlusForkData *file,
 	return;
 }
 
+#if !LINUX
 /*
  * wipefs() in -lutil knows about multiple filesystem formats.
  * This replaces the code:
@@ -343,7 +364,7 @@ dowipefs(int fd)
 	wipefs_free(&handle);
 	return err;
 }
-
+#endif
 
 /*
  * make_hfsplus
@@ -368,13 +389,14 @@ make_hfsplus(const DriveInfo *driveInfo, hfsparams_t *defaults)
 	HFSPlusVolumeHeader	*header = NULL;
 	UInt64			sector;
 
+#if !LINUX
 	/* Use wipefs() API to clear old metadata from the device.
 	 * This should be done before we start writing anything on the 
 	 * device as wipefs will internally call ioctl(DKIOCDISCARD) on the 
 	 * entire device.
 	 */
 	(void) dowipefs(driveInfo->fd);
-
+#endif
 	/* --- Create an HFS Plus header:  */
 
 	header = (HFSPlusVolumeHeader*)malloc((size_t)kBytesPerSector);
@@ -690,7 +712,7 @@ InitVH(hfsparams_t *defaults, UInt64 sectors, HFSPlusVolumeHeader *hp)
 	}
 	hp->attributes = kHFSVolumeUnmountedMask | kHFSUnusedNodeFixMask;
 	if (defaults->flags & kMakeContentProtect) {
-		hp->attributes |= kHFSContentProtectionMask;	
+		hp->attributes |= kHFSContentProtectionMask;
 	}
 	hp->lastMountedVersion = kHFSPlusMountVersion;
 
@@ -1146,7 +1168,8 @@ WriteExtentsFile(const DriveInfo *driveInfo, UInt64 startingSector,
 	offset += nodeBitsInHeader/8;
 
 	SETOFFSET(buffer, nodeSize, offset, 4);
-	
+
+#if !LINUX
 	if (NEWFS_HFS_DEBUG && numOverflowExtents) {
 		void *node2 = (uint8_t*)buffer + nodeSize;
 		size_t i;
@@ -1180,6 +1203,7 @@ WriteExtentsFile(const DriveInfo *driveInfo, UInt64 startingSector,
 		}
 		SETOFFSET(node2, nodeSize, offset, numOverflowExtents + 1);
 	}
+#endif
 
 	*bytesUsed = (SWAP_BE32 (bthp->totalNodes) - SWAP_BE32 (bthp->freeNodes) - *mapNodes) * nodeSize;
 
@@ -1371,7 +1395,7 @@ WriteAttributesFile(const DriveInfo *driveInfo, UInt64 startingSector,
 	WriteBuffer(driveInfo, startingSector, *bytesUsed, buffer);
 }
 
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE && !LINUX
 static int
 get_dev_uuid(const char *disk_name, char *dev_uuid_str, int dev_uuid_len)
 {
@@ -1622,9 +1646,11 @@ InitCatalogRoot_HFSPlus(const hfsparams_t *dp, const HFSPlusVolumeHeader *header
 	UInt16					nodeSize;
 	SInt16					offset;
 	size_t					unicodeBytes;
+#if !LINUX
 	UInt8 canonicalName[kHFSPlusMaxFileNameBytes];	// UTF8 character may convert to three bytes, plus a NUL
 	CFStringRef cfstr;
 	Boolean	cfOK;
+#endif
 	int index = 0;
 
 	nodeSize = dp->catalogNodeSize;
@@ -1644,7 +1670,9 @@ InitCatalogRoot_HFSPlus(const hfsparams_t *dp, const HFSPlusVolumeHeader *header
 	 * First record is always the root directory...
 	 */
 	ckp = (HFSPlusCatalogKey *)((UInt8 *)buffer + offset);
-	
+#if LINUX
+	ConvertUTF8toUnicode(dp->volumeName, sizeof(ckp->nodeName.unicode), ckp->nodeName.unicode, &ckp->nodeName.length);
+#else
 	/* Use CFString functions to get a HFSPlus Canonical name */
 	cfstr = CFStringCreateWithCString(kCFAllocatorDefault, (char *)dp->volumeName, kCFStringEncodingUTF8);
 	cfOK = _CFStringGetFileSystemRepresentation(cfstr, canonicalName, sizeof(canonicalName));
@@ -1661,6 +1689,7 @@ InitCatalogRoot_HFSPlus(const hfsparams_t *dp, const HFSPlusVolumeHeader *header
 		      dp->volumeName, kDefaultVolumeNameStr);
 	}
 	CFRelease(cfstr);
+#endif
 	ckp->nodeName.length = SWAP_BE16 (ckp->nodeName.length);
 
 	unicodeBytes = sizeof(UniChar) * SWAP_BE16 (ckp->nodeName.length);
@@ -1672,9 +1701,12 @@ InitCatalogRoot_HFSPlus(const hfsparams_t *dp, const HFSPlusVolumeHeader *header
 	cdp = (HFSPlusCatalogFolder *)((UInt8 *)buffer + offset);
 	cdp->recordType		= SWAP_BE16 (kHFSPlusFolderRecord);
 	/* folder count is only supported on HFSX volumes */
+#if !LINUX
+	// FIXME
 	if (dp->flags & kMakeCaseSensitive) {
 		cdp->flags 		= SWAP_BE16 (kHFSHasFolderCountMask);
 	}
+#endif
 	cdp->valence        = SWAP_BE32 (dp->journaledHFS ? 2 : 0);
 	cdp->folderID		= SWAP_BE32 (kHFSRootFolderID);
 	cdp->createDate		= SWAP_BE32 (dp->createDate);
@@ -2080,12 +2112,14 @@ void GenerateVolumeUUID(VolumeUUID *newVolumeID) {
 	unsigned char digest[20];
 	time_t now;
 	clock_t uptime;
-	int mib[2];
-	int sysdata;
-	char sysctlstring[128];
 	size_t datalen;
 	double sysloadavg[3];
+#if !LINUX
+	int sysdata;
+	int mib[2];
+	char sysctlstring[128];
 	struct vmtotal sysvmtotal;
+#endif
 	
 	do {
 		/* Initialize the SHA-1 context for processing: */
@@ -2098,52 +2132,58 @@ void GenerateVolumeUUID(VolumeUUID *newVolumeID) {
 		SHA1_Update(&context, &uptime, sizeof(uptime));
 		
 		/* The kernel's boot time: */
+#if !LINUX
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_BOOTTIME;
 		datalen = sizeof(sysdata);
 		sysctl(mib, 2, &sysdata, &datalen, NULL, 0);
 		SHA1_Update(&context, &sysdata, datalen);
-		
+#endif
 		/* The system's host id: */
+#if !LINUX
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_HOSTID;
 		datalen = sizeof(sysdata);
 		sysctl(mib, 2, &sysdata, &datalen, NULL, 0);
 		SHA1_Update(&context, &sysdata, datalen);
-
+#endif
 		/* The system's host name: */
+#if !LINUX
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_HOSTNAME;
 		datalen = sizeof(sysctlstring);
 		sysctl(mib, 2, sysctlstring, &datalen, NULL, 0);
 		SHA1_Update(&context, sysctlstring, datalen);
-
+#endif
 		/* The running kernel's OS release string: */
+#if !LINUX
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_OSRELEASE;
 		datalen = sizeof(sysctlstring);
 		sysctl(mib, 2, sysctlstring, &datalen, NULL, 0);
 		SHA1_Update(&context, sysctlstring, datalen);
-
+#endif
 		/* The running kernel's version string: */
+#if !LINUX
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_VERSION;
 		datalen = sizeof(sysctlstring);
 		sysctl(mib, 2, sysctlstring, &datalen, NULL, 0);
 		SHA1_Update(&context, sysctlstring, datalen);
-
+#endif
 		/* The system's load average: */
 		datalen = sizeof(sysloadavg);
 		getloadavg(sysloadavg, 3);
 		SHA1_Update(&context, &sysloadavg, datalen);
 
 		/* The system's VM statistics: */
+#if !LINUX
 		mib[0] = CTL_VM;
 		mib[1] = VM_METER;
 		datalen = sizeof(sysvmtotal);
 		sysctl(mib, 2, &sysvmtotal, &datalen, NULL, 0);
 		SHA1_Update(&context, &sysvmtotal, datalen);
-
+#endif
 		/* The current GMT (26 ASCII characters): */
 		time(&now);
 		strncpy(randomInputBuffer, asctime(gmtime(&now)), 26);	/* "Mon Mar 27 13:46:26 2000" */

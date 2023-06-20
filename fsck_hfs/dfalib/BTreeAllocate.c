@@ -297,10 +297,10 @@ OSStatus	ExtendBTree	(BTreeControlBlockPtr	btreePtr,
 		totalMapBits  += mapBits;
 		
 	} while ( ((BTNodeDescriptor*)mapNode.buffer)->fLink != 0 );
-
+#if !LINUX
 	if (DEBUG_BUILD && totalMapBits != CalcMapBits (btreePtr))
 		Panic ("\pExtendBTree: totalMapBits != CalcMapBits");
-		
+#endif
 	/////////////////////// Extend LEOF If Necessary ////////////////////////////
 
 	minEOF = (UInt64)newTotalNodes * (UInt64)nodeSize;
@@ -393,12 +393,12 @@ OSStatus	ExtendBTree	(BTreeControlBlockPtr	btreePtr,
 			
 			mapStart	 = (UInt16 *) GetRecordAddress (btreePtr, mapNode.buffer, mapIndex);
 			mapSize		 = GetRecordSize (btreePtr, mapNode.buffer, mapIndex);
-			
+#if !LINUX
 			if (DEBUG_BUILD && mapSize != M_MapRecordSize (btreePtr->nodeSize) )
 			{
 				Panic ("\pExtendBTree: mapSize != M_MapRecordSize");
 			}
-			
+#endif
 			mapBits		= mapSize << 3;		// mapSize (in bytes) * 8
 			recStartBit	= totalMapBits;		// bit number of first bit in map record
 			totalMapBits  += mapBits;

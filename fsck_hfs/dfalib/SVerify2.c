@@ -31,7 +31,9 @@
 */
 
 #include <sys/ioctl.h>
+#if !LINUX
 #include <sys/disk.h>
+#endif
 
 #include "BTree.h"
 #include "BTreePrivate.h"

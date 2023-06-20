@@ -34,6 +34,7 @@
 
 #define SHOW_ELAPSED_TIMES  0
 
+#include "missing.h"
 
 #if SHOW_ELAPSED_TIMES
 #include <sys/time.h>
@@ -48,6 +49,10 @@
 #define CONFIG_HFS_TRIM 1
 #endif
 
+#if LINUX
+#include <bsd/string.h>
+#endif
+
 #define	DisplayTimeRemaining 0
 
 /* Variable containing diskdev_cmds tag number and date/time when the binary was built.
@@ -59,7 +64,9 @@
  *
  * TODO: Get this building properly within Xcode, without need for the version.pl script!
  */
+#if !LINUX
 extern const unsigned char fsck_hfsVersionString[];
+#endif
 
 int gGUIControl;
 extern char lflag;
@@ -322,7 +329,7 @@ DoAgain:
 	dataArea.DrvNum				= fsReadRef;
 	dataArea.liveVerifyState 	= liveMode;
 	dataArea.scanCount		= scanCount;
-    	if (strlcpy(dataArea.deviceNode, rdevnode, sizeof(dataArea.deviceNode)) != strlen(rdevnode)) {
+	if (strlcpy(dataArea.deviceNode, rdevnode, sizeof(dataArea.deviceNode)) != strlen(rdevnode)) {
 		dataArea.deviceNode[0] = '\0';
 	}
     	
@@ -547,6 +554,19 @@ termScav:
 	return( err );
 }
 
+static int ScavCtrlJournalCallback (off_t start, void *data, size_t len)
+{
+	Buf_t *buf;
+	int rv;
+	rv = CacheRead(&fscache, start, (int)len, &buf);
+	if (rv != 0)
+		abort();
+	memcpy(buf->Buffer, data, len);
+	rv = CacheWrite(&fscache, buf, 0, kLockWrite);
+	if (rv != 0)
+		abort();
+	return 0;
+}
 
 /*------------------------------------------------------------------------------
 
@@ -686,18 +706,7 @@ void ScavCtrl( SGlobPtr GPtr, UInt32 ScavOp, short *ScavRes )
 								 blockSize,
 								 0,
 								 jnlInfo.name,
-								 ^(off_t start, void *data, size_t len) {
-									 Buf_t *buf;
-									 int rv;
-									 rv = CacheRead(&fscache, start, (int)len, &buf);
-									 if (rv != 0)
-										 abort();
-									 memcpy(buf->Buffer, data, len);
-									 rv = CacheWrite(&fscache, buf, 0, kLockWrite);
-									 if (rv != 0)
-										 abort();
-									 return 0;}
-							    ) == -1) {
+								 ScavCtrlJournalCallback) == -1) {
 							fsckPrint(GPtr->context, E_DirtyJournal);
 							GPtr->JStat |= S_DirtyJournal;
 						} else if (debug) {

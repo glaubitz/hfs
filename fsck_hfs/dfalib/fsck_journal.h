@@ -97,12 +97,14 @@ typedef struct journal_header {
  * bytes.
  */
 
+typedef int (*journal_write_block_t)(off_t, void *, size_t);
+
 int	journal_open(int jdev,
 		     off_t         offset,
 		     off_t         journal_size,
 		     size_t        min_fs_block_size,
 		     uint32_t       flags,
 		     const char	*jdev_name,
-		     int (^do_write_b)(off_t, void *, size_t));
+		     journal_write_block_t do_write_b);
 
 #endif /* !_FSCK_JOURNAL_H */

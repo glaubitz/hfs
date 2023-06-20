@@ -40,7 +40,14 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+
+#if !LINUX
 #include <sys/disk.h>
+#else
+#include <linux/fs.h>
+#include "missing.h"
+#endif
+
 #include <sys/param.h>
 
 #include "../fsck_hfs.h"
@@ -51,7 +58,10 @@
 extern char debug;
 
 #include <hfs/hfs_format.h>
+
+#if !LINUX
 #include <libkern/OSByteOrder.h>
+#endif
 
 typedef struct SwapType {
 	const char *name;
@@ -73,8 +83,6 @@ static swapper_t swappedEndian = {
 	^(uint32_t x) { return OSSwapInt32(x); },
 	^(uint64_t x) { return OSSwapInt64(x); }
 };
-
-typedef int (^journal_write_block_t)(off_t, void *, size_t);
 
 //
 // this isn't a great checksum routine but it will do for now.
@@ -379,14 +387,18 @@ journal_open(int jfd,
 	     size_t	min_fs_blksize,	// Blocksize of the data filesystem, journal blocksize must be at least this size
 	     uint32_t	flags __unused,	// Not used in this implementation
 	     const char	*jdev_name,	// The name of the journal device, for logging
-	     int (^do_write_b)(off_t, void*, size_t))
+	     journal_write_block_t do_write_b)
 {
 	journal_header jhdr = { 0 };
 	swapper_t	*jnlSwap;	// Used to swap fields of the journal
 	uint32_t	tempCksum;	// Temporary checksum value
 	uint32_t	jBlkSize = 0;
 
+#if LINUX
+	if (ioctl(jfd, BLKBSZGET, &jBlkSize) == -1) {
+#else
 	if (ioctl(jfd, DKIOCGETBLOCKSIZE, &jBlkSize) == -1) {
+#endif
 		jBlkSize = (uint32_t)min_fs_blksize;
 	} else {
 		if (jBlkSize < min_fs_blksize) {
