@@ -61,27 +61,40 @@ extern char debug;
 
 #if !LINUX
 #include <libkern/OSByteOrder.h>
+#else
+#include <byteswap.h>
+#define OSSwapInt16(x) bswap_16(x)
+#define OSSwapInt32(x) bswap_32(x)
+#define OSSwapInt64(x) bswap_64(x)
 #endif
+
+uint16_t nativeEndian16 (uint16_t x) { return x; }
+uint32_t nativeEndian32 (uint32_t x) { return x; }
+uint64_t nativeEndian64 (uint64_t x) { return x; }
+
+uint16_t swappedEndian16 (uint16_t x) { return OSSwapInt16(x); }
+uint32_t swappedEndian32 (uint32_t x) { return OSSwapInt32(x); }
+uint64_t swappedEndian64 (uint64_t x) { return OSSwapInt64(x); }
 
 typedef struct SwapType {
 	const char *name;
-	uint16_t (^swap16)(uint16_t);
-	uint32_t (^swap32)(uint32_t);
-	uint64_t (^swap64)(uint64_t);
+	uint16_t (* swap16)(uint16_t);
+	uint32_t (* swap32)(uint32_t);
+	uint64_t (* swap64)(uint64_t);
 } swapper_t;
 
 static swapper_t nativeEndian = {
 	"native endian",
-	^(uint16_t x) { return x; },
-	^(uint32_t x) { return x; },
-	^(uint64_t x) { return x; }
+	&nativeEndian16,
+	&nativeEndian32,
+	&nativeEndian64
 };
 
 static swapper_t swappedEndian = {
 	"swapped endian",
-	^(uint16_t x) { return OSSwapInt16(x); },
-	^(uint32_t x) { return OSSwapInt32(x); },
-	^(uint64_t x) { return OSSwapInt64(x); }
+	&swappedEndian16,
+	&swappedEndian32,
+	&swappedEndian64
 };
 
 //
