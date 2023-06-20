@@ -385,7 +385,7 @@ journal_open(int jfd,
 	     off_t	offset,		// Offset of journal
 	     off_t	journal_size,	// Size, in bytes, of the entire journal
 	     size_t	min_fs_blksize,	// Blocksize of the data filesystem, journal blocksize must be at least this size
-	     uint32_t	flags __unused,	// Not used in this implementation
+	     uint32_t	flags,	// Not used in this implementation
 	     const char	*jdev_name,	// The name of the journal device, for logging
 	     journal_write_block_t do_write_b)
 {

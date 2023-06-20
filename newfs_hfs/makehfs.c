@@ -1074,7 +1074,7 @@ exit:
  */
 static void
 WriteExtentsFile(const DriveInfo *driveInfo, UInt64 startingSector,
-        const hfsparams_t *dp, HFSExtentDescriptor *bbextp __unused , void *buffer,
+        const hfsparams_t *dp, HFSExtentDescriptor *bbextp, void *buffer,
         UInt32 *bytesUsed, UInt32 *mapNodes)
 {
 	BTNodeDescriptor	*ndp;
@@ -1221,7 +1221,7 @@ WriteExtentsFile(const DriveInfo *driveInfo, UInt64 startingSector,
  */
 static void
 WriteAttributesFile(const DriveInfo *driveInfo, UInt64 startingSector,
-        const hfsparams_t *dp, HFSExtentDescriptor *bbextp __unused, void *buffer,
+        const hfsparams_t *dp, HFSExtentDescriptor *bbextp, void *buffer,
         UInt32 *bytesUsed, UInt32 *mapNodes)
 {
 	BTNodeDescriptor	*ndp;
