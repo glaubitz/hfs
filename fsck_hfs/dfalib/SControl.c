@@ -204,6 +204,22 @@ isMinorError(int msg, int *counts)
 	}
 }
 
+static int *msgCounts = NULL;
+static jmp_buf envBuf;
+
+static fsck_block_status_t
+fsckAfterCallback(fsck_ctx_t c, int msgNum, va_list args)
+{
+	if (abs(msgNum) > E_FirstError && abs(msgNum) < E_LastError) {
+		if (isMinorError(abs(msgNum), msgCounts) == 1)
+			return fsckBlockContinue;
+		longjmp(envBuf, 1);
+		return fsckBlockAbort;
+	} else {
+		return fsckBlockContinue;
+	}
+}
+
 /*------------------------------------------------------------------------------
 
 External
@@ -211,7 +227,6 @@ External
 
 ------------------------------------------------------------------------------*/
 
-static jmp_buf				envBuf;
 int
 CheckHFS( const char *rdevnode, int fsReadRef, int fsWriteRef, int checkLevel, 
 	  int repairLevel, fsck_ctx_t fsckContext, int lostAndFoundMode, 
@@ -226,7 +241,6 @@ CheckHFS( const char *rdevnode, int fsReadRef, int fsWriteRef, int checkLevel,
 	int					isJournaled = 0;
 	Boolean 			autoRepair;
 	Boolean				exitEarly = 0;
-	__block int *msgCounts = NULL;
 	Boolean				majorErrors = 0;
 
 	if (checkLevel == kMajorCheck) {
@@ -288,16 +302,7 @@ CheckHFS( const char *rdevnode, int fsReadRef, int fsWriteRef, int checkLevel,
 			 * the message in question corresponds to a major or a minor error.  If it's
 			 * major, we longjmp just above, which causes us to exit out early.
 			 */
-			fsckSetBlock(fsckContext, fsckPhaseAfterMessage, (fsckBlock_t) ^(fsck_ctx_t c, int msgNum, va_list args) {
-				if (abs(msgNum) > E_FirstError && abs(msgNum) < E_LastError) {
-					if (isMinorError(abs(msgNum), msgCounts) == 1)
-						return fsckBlockContinue;
-					longjmp(envBuf, 1);
-					return fsckBlockAbort;
-				} else {
-					return fsckBlockContinue;
-				}
-			});
+			fsckSetBlock(fsckContext, fsckPhaseAfterMessage, fsckAfterCallback);
 		}
 	}
 DoAgain:
