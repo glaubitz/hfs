@@ -1,0 +1,36 @@
+TODO for Linux port
+===================
+
+- separate removal of "\p" escape code into its own commit->done
+- separate Linux header adjustments into their own commit
+- separate block-size detection for Linux into its own commit
+  and clean up the code (i.e. use definitions from <linux/fs.h>)
+- move remaining unrelated changes into separate commits, too
+- find and delete all no-op changes in Linux port commit
+- disable all DEBUG_BUILD code on Linux
+- try to get rid of include/sys/appleapiopts.h
+- move byteswap functions from fsck_journal.c to missing.h
+- switch new_fs code from OpenSSL to libmd->done
+  (see: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=826608)
+- rename "missing.h" to "linux-support.h"
+- move all Linux-specfic includes to "linux-support.h"
+- clean up "linux-support.h" to remove obsolete or redundant definitions
+
+Optional:
+
+- fix all compiler warnings
+- switch build system to automake or cmake
+- apply patch to fix hardlink problems if not already fixed upstream
+  (see: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=995159)
+
+Packaging:
+
+- split out Legacy HFS into a separate package called hfsprogs-legacy
+  based on the last version of the diskdev_cmds package that has full
+  support for creating and checking legacy HFS filesystems
+
+Dropped:
+
+- re-add patch for creating HFS legacy filesystems
+- fix volume naming for HFS legacy support in mkfs
+  (see: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1003038)
