@@ -20,6 +20,11 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
+
+#if LINUX
+#define __printflike(x, y) __attribute__((format(printf, x, y)))
+#endif
+
 #include <stdio.h>
 
 #ifndef _FSCK_MESSAGES_H

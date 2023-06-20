@@ -20,6 +20,11 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
+
+#if LINUX
+#define __printflike(x, y) __attribute__((format(printf, x, y)))
+#endif
+
 #ifndef __FSCK_DEBUG__
 #define __FSCK_DEBUG__
 
