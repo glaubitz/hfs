@@ -141,7 +141,7 @@ typedef enum fsck_block_phase_type fsck_block_phase_t;
  * the third is a va_list of the arguments for the message.
  */
 
-typedef fsck_block_status_t (^fsckBlock_t)(fsck_ctx_t, int, va_list);
+typedef fsck_block_status_t (*fsckBlock_t)(fsck_ctx_t, int, va_list);
 
 extern fsckBlock_t fsckGetBlock(fsck_ctx_t, fsck_block_phase_t);
 extern void fsckSetBlock(fsck_ctx_t, fsck_block_phase_t, fsckBlock_t);

@@ -74,8 +74,6 @@ static swapper_t swappedEndian = {
 	^(uint64_t x) { return OSSwapInt64(x); }
 };
 
-typedef int (^journal_write_block_t)(off_t, void *, size_t);
-
 //
 // this isn't a great checksum routine but it will do for now.
 // we use it to checksum the journal header and the block list
@@ -379,7 +377,7 @@ journal_open(int jfd,
 	     size_t	min_fs_blksize,	// Blocksize of the data filesystem, journal blocksize must be at least this size
 	     uint32_t	flags __unused,	// Not used in this implementation
 	     const char	*jdev_name,	// The name of the journal device, for logging
-	     int (^do_write_b)(off_t, void*, size_t))
+	     journal_write_block_t do_write_b)
 {
 	journal_header jhdr = { 0 };
 	swapper_t	*jnlSwap;	// Used to swap fields of the journal
