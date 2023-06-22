@@ -786,7 +786,11 @@ setup( char *dev, int *canWritePtr )
 	}
 
 	/* Get device block size to initialize cache */
+#if LINUX
+	if (ioctl(fsreadfd, BLKBSZGET, &devBlockSize) < 0) {
+#else
 	if (ioctl(fsreadfd, DKIOCGETBLOCKSIZE, &devBlockSize) < 0) {
+#endif
 		pfatal ("Can't get device block size\n");
 		return (0);
 	}
@@ -1019,14 +1023,25 @@ ScanDisk(int fd)
 		printStatus = 0; \
 	} while (0)
 
+#if LINUX
+	if (ioctl(fd, BLKBSZGET, &devBlockSize) == -1) {
+#else
 	if (ioctl(fd, DKIOCGETBLOCKSIZE, &devBlockSize) == -1) {
+#endif
 		devBlockSize = 512;
 	}
 
+#if LINUX
+	if (ioctl(fd, BLKGETSIZE64, &devBlockTotal) == -1) {
+		diskSize = 0;
+	} else
+		diskSize = devBlockTotal;
+#else
 	if (ioctl(fd, DKIOCGETBLOCKCOUNT, &devBlockTotal) == -1) {
 		diskSize = 0;
 	} else
 		diskSize = devBlockTotal * devBlockSize;
+#endif
 
 	while (buffer == NULL && bufSize >= devBlockSize) {
 		buffer = malloc(bufSize);

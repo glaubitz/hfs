@@ -914,6 +914,34 @@ hfs_newfs(char *device)
 		if (fstat( fso, &stbuf) < 0)
 			fatal("%s: %s", device, strerror(errno));
 
+#if LINUX
+		dip.sectorSize = 512;
+		dip.physSectorSize = 512;
+		dip.physSectorsPerIO = 1;
+#ifndef        BLKGETSIZE
+#define        BLKGETSIZE              _IO(0x12,96)
+#endif
+#ifndef        BLKGETSIZE64
+#define BLKGETSIZE64           _IOR(0x12,114,size_t)
+#endif
+        
+		if (S_ISREG(stbuf.st_mode)) {
+			dip.totalSectors = stbuf.st_size / 512;
+		} 
+		else if (S_ISBLK(stbuf.st_mode)) {
+			unsigned long size;
+			u_int64_t size64;
+			if (!ioctl(fso, BLKGETSIZE64, &size64))
+				dip.totalSectors = size64 / 512;
+			else if (!ioctl(fso, BLKGETSIZE, &size))
+				dip.totalSectors = size;
+			else
+				fatal("%s: %s", device, strerror(errno));
+		} 
+		else
+			fatal("%s: is not a block device", device);
+	}
+#else
 		if (ioctl(fso, DKIOCGETBLOCKSIZE, &dip.physSectorSize) < 0)
 			fatal("%s: %s", device, strerror(errno));
 
@@ -953,6 +981,7 @@ hfs_newfs(char *device)
 
 	dip.sectorSize = kBytesPerSector;
 	dip.totalSectors = dip.physTotalSectors * dip.physSectorSize / dip.sectorSize;
+#endif
 
 	dip.sectorOffset = 0;
 	time(&createtime);

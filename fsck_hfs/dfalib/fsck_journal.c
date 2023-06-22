@@ -407,7 +407,11 @@ journal_open(int jfd,
 	uint32_t	tempCksum;	// Temporary checksum value
 	uint32_t	jBlkSize = 0;
 
+#if LINUX
+	if (ioctl(jfd, BLKBSZGET, &jBlkSize) == -1) {
+#else
 	if (ioctl(jfd, DKIOCGETBLOCKSIZE, &jBlkSize) == -1) {
+#endif
 		jBlkSize = (uint32_t)min_fs_blksize;
 	} else {
 		if (jBlkSize < min_fs_blksize) {
