@@ -20,8 +20,12 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
- 
-#include <CoreFoundation/CFBase.h>
+
+#if !LINUX
+#include <CoreFoundation/CFBase.h>*/
+#else
+#include <bsd/bsd.h>
+#endif
 
 enum {
 	kMinHFSPlusVolumeSize	= (512 * 1024),

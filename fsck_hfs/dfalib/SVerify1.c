@@ -40,7 +40,11 @@
 #include <fcntl.h>
 #include <limits.h>
 
+#if !LINUX
 #include <libkern/OSByteOrder.h>
+#else
+#define XATTR_MAXNAMELEN 127
+#endif
 #define SW16(x)	OSSwapBigToHostInt16(x)
 #define	SW32(x)	OSSwapBigToHostInt32(x)
 #define	SW64(x)	OSSwapBigToHostInt64(x)
@@ -355,6 +359,9 @@ IsJournalEmpty(SGlobPtr GPtr, fsckJournalInfo_t *jp)
 				char **namePtr = jp ? &jp->name : NULL;
 				if (debug)
 					plog("External Journal device\n");
+#if LINUX
+				goto out;
+#endif
 				jfd = OpenDeviceByUUID(&jib.ext_jnl_uuid, namePtr);
 			}
 			if (jfd == -1) {
@@ -3575,6 +3582,7 @@ static int RecordBadExtent(SGlobPtr GPtr, UInt32 fileID, UInt8 forkType,
 /*
  * Build a catalog node thread key.
  */
+#if !LINUX
 __unused static void
 buildthreadkey(UInt32 parentID, CatalogKey *key)
 {
@@ -3582,7 +3590,7 @@ buildthreadkey(UInt32 parentID, CatalogKey *key)
 	key->hfsPlus.parentID = parentID;
 	key->hfsPlus.nodeName.length = 0;
 }
-
+#endif
 
 static void
 printpath(SGlobPtr GPtr, UInt32 fileID)
@@ -4478,6 +4486,9 @@ static int CompareExtentFileID(const void *first, const void *second)
 //int journal_replay(SGlobPtr gptr)
 int journal_replay(const char *block_device)
 {
+#if LINUX
+	return 0;
+#else
 	int retval = 0;
 	struct vfsconf vfc;
 	int mib[4];
@@ -4509,5 +4520,6 @@ int journal_replay(const char *block_device)
 
 out:
 	return retval;
+#endif
 }
  

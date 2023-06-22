@@ -40,7 +40,14 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+
+#if !LINUX
 #include <sys/disk.h>
+#else
+#include <linux/fs.h>
+#include "missing.h"
+#endif
+
 #include <sys/param.h>
 
 #include "../fsck_hfs.h"

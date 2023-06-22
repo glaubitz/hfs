@@ -30,7 +30,9 @@
  * volume format.
  */
 #include <hfs/hfs_format.h>
+#if !LINUX
 #include <libkern/OSByteOrder.h>
+#endif
 #include "SRuntime.h"
 
 /*********************/

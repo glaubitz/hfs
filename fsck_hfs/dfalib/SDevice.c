@@ -28,17 +28,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-
-#include <IOKit/storage/IOMediaBSDClient.h>
-
+#if LINUX
+#include <fcntl.h>
+#include <sys/stat.h>
 #else
-
+#include <IOKit/storage/IOMediaBSDClient.h>
+#endif /* LINUX */
+#else
 #include <Files.h>
 #include <Device.h>
 #include <Disks.h>
-
 #endif
-
 
 OSErr GetDeviceSize(int driveRefNum, UInt64 *numBlocks, UInt32 *blockSize)
 {
@@ -55,6 +55,7 @@ OSErr GetDeviceSize(int driveRefNum, UInt64 *numBlocks, UInt32 *blockSize)
 		if (debug) plog("ioctl(DKIOCGETBLOCKSIZE) for fd %d: %s\n", driveRefNum, strerror(errno));
 		return (-1);
 	}
+#endif /* BSD */
 
 	if (devBlockSize != 512) {
 		*numBlocks = (devBlockCount * (UInt64)devBlockSize) / 512;

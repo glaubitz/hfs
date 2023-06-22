@@ -22,6 +22,10 @@
  */
 #include <stdio.h>
 
+#if LINUX
+#include <bsd/bsd.h>
+#endif
+
 #ifndef _FSCK_MESSAGES_H
 #define _FSCK_MESSAGES_H
 

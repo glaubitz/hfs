@@ -471,7 +471,8 @@ void	InvalidateCalculatedVolumeBitMap( SGlobPtr GPtr )
 //				GPtr->realVCB			Real in-memory vcb
 //------------------------------------------------------------------------------
 
-#if !BSD	
+#if BSD
+#if !LINUX
 OSErr GetVolumeFeatures( SGlobPtr GPtr )
 {
 	OSErr					err;
@@ -509,7 +510,7 @@ OSErr GetVolumeFeatures( SGlobPtr GPtr )
 	return( noErr );
 }
 #endif
-
+#endif
 
 
 /*-------------------------------------------------------------------------------

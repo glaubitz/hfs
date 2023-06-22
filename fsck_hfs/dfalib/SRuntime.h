@@ -26,8 +26,11 @@
 #define __SRUNTIME__
 
 #if BSD
-
+#if LINUX
+#include "missing.h"
+#else
 #include <sys/types.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -60,7 +63,7 @@ typedef char *		Ptr;
 typedef Ptr *		Handle;
 typedef u_int8_t	Byte;
 typedef size_t 		Size;
-typedef unsigned char	Boolean;
+//typedef unsigned char	Boolean;
 typedef u_int32_t	ItemCount;
 typedef u_int32_t	ByteCount;
 typedef u_int32_t	OptionBits;
@@ -71,7 +74,7 @@ typedef int32_t 	OSStatus;
 typedef u_int32_t	OSType;
 typedef u_int32_t	ResType;
 
-typedef u_int16_t	UniChar;
+//typedef u_int16_t	UniChar;
 typedef u_int32_t	UniCharCount;
 typedef UniChar *	UniCharArrayPtr;
 typedef const UniChar *	ConstUniCharArrayPtr;
@@ -89,10 +92,12 @@ typedef const unsigned char *	ConstStr255Param;
 
 typedef u_int32_t	HFSCatalogNodeID;
 
+#if !LINUX
 enum {
 	false		= 0,
 	true		= 1
 };
+#endif
 
 /* OS error codes */
 enum {

@@ -27,7 +27,11 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#if LINUX
+#include "missing.h"
+#else
 #include <sys/types.h>
+#endif /* __LINUX__ */
 #include <sys/uio.h>
 #include <unistd.h>
 #include <string.h>

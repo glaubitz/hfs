@@ -21,6 +21,7 @@
  * @APPLE_LICENSE_HEADER_END@
  */
 
+#define _GNU_SOURCE
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +30,9 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/param.h>
+#if LINUX
+#include <bsd/stdio.h>
+#endif
 
 #include "fsck_messages.h"
 #include "fsck_keys.h"
@@ -531,11 +535,20 @@ doit:
 				break;
 		}
 		if (rv == -1) {
+#if LINUX
+			char resp[80];
+#else
 			char *resp = NULL;
+#endif
 			size_t len;
 
 			count++;
+#if LINUX
+			fgets (resp, 80, stdin);
+			len = strlen(resp);
+#else
 			resp = fgetln(stdin, &len);
+#endif
 			if (resp == NULL || len == 0) {
 				if (count > 10) {
 					// Only ask so many times...

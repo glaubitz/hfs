@@ -56,7 +56,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
+#if LINUX
+#include <limits.h>
+#include <signal.h>
+#include <bsd/stdio.h>
+#include <bsd/string.h>
+#else
 #include <sys/syslimits.h>
+#endif
 #include <pwd.h>
 
 #include <ctype.h>
@@ -65,7 +72,9 @@
 #include <string.h>
 #include <unistd.h> 
 #include <stdlib.h>
+#if !LINUX
 #include <sys/sysctl.h>
+#endif
 #include <fcntl.h>
 
 #include "fsck_hfs.h"
@@ -194,12 +203,14 @@ retry:
 			plog("Can't stat %s\n", raw);
 			return (origname);
 		}
+#if !LINUX
 		if ((stchar.st_mode & S_IFMT) == S_IFCHR) {
 			return (raw);
 		} else {
 			plog("%s is not a character device\n", raw);
 			return (origname);
 		}
+#endif
 	} else if ((stblock.st_mode & S_IFMT) == S_IFCHR && !retried) {
 		newname = unrawname(newname);
 		retried++;
@@ -225,7 +236,11 @@ rawname(char *name)
 	*dp = 0;
 	(void)strlcpy(rawbuf, name, sizeof(rawbuf));
 	*dp = '/';
+#if LINUX
+	(void)strlcat(rawbuf, "/", sizeof(rawbuf));
+#else
 	(void)strlcat(rawbuf, "/r", sizeof(rawbuf));
+#endif
 	(void)strlcat(rawbuf, &dp[1], sizeof(rawbuf));
 
 	return (rawbuf);
@@ -1008,6 +1023,19 @@ fplog(FILE *stream, const char *fmt, ...)
 #define kProgressToggle	"kern.progressmeterenable"
 #define	kProgress	"kern.progressmeter"
 
+#if LINUX
+void start_progress()
+{
+}
+
+void draw_progress(int pct)
+{
+}
+
+void end_progress()
+{
+}
+#else
 void
 start_progress(void)
 {
@@ -1045,4 +1073,4 @@ end_progress(void)
 		warn("sysctl(%s) failed", kProgressToggle);
 	}
 }
-
+#endif

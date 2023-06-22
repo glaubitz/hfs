@@ -1,12 +1,16 @@
 #include <fcntl.h>
+#if !LINUX
 #include <util.h>
+#endif
 #include <unistd.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <uuid/uuid.h>
+#if !LINUX
 #include <IOKit/IOBSD.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/storage/IOMedia.h>
+#endif
 
 extern char debug;
 extern void plog(const char *, ...);

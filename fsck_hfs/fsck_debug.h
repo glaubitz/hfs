@@ -23,6 +23,10 @@
 #ifndef __FSCK_DEBUG__
 #define __FSCK_DEBUG__
 
+#if LINUX
+#include <bsd/bsd.h>
+#endif
+
 #include <sys/types.h>
 
 enum debug_message_type {

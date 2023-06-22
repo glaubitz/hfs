@@ -34,6 +34,7 @@
 
 #define SHOW_ELAPSED_TIMES  0
 
+#include "missing.h"
 
 #if SHOW_ELAPSED_TIMES
 #include <sys/time.h>
@@ -48,6 +49,10 @@
 #define CONFIG_HFS_TRIM 1
 #endif
 
+#if LINUX
+#include <bsd/string.h>
+#endif
+
 #define	DisplayTimeRemaining 0
 
 /* Variable containing diskdev_cmds tag number and date/time when the binary was built.
@@ -59,7 +64,9 @@
  *
  * TODO: Get this building properly within Xcode, without need for the version.pl script!
  */
+#if !LINUX
 extern const unsigned char fsck_hfsVersionString[];
+#endif
 
 int gGUIControl;
 extern char lflag;

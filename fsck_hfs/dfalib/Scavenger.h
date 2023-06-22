@@ -41,12 +41,18 @@
 
 #include <assert.h>
 #include <sys/xattr.h>
+#if !LINUX
 #include <sys/acl.h>
 #include <sys/kauth.h>
-#include <sys/errno.h>
 #include <sys/syslimits.h>
+#endif
+#include <sys/errno.h>
 #include <sys/param.h>
+#if !LINUX
 #include <sys/sysctl.h>
+#else
+#include <linux/sysctl.h>
+#endif
 #include <sys/mount.h>
 #include <hfs/hfs_mount.h>
 

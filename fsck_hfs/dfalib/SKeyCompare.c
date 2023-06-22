@@ -453,7 +453,9 @@ SInt32 CompareExtentKeysPlus( const HFSPlusExtentKey *searchKey, const HFSPlusEx
  * The name portion of the key is compared using a 16-bit binary comparison. 
  * This is called from the b-tree code.
  */
+#if !LINUX
 __private_extern__
+#endif
 SInt32
 CompareAttributeKeys(const AttributeKey *searchKey, const AttributeKey *trialKey)
 {

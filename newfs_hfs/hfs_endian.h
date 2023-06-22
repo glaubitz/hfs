@@ -30,7 +30,12 @@
  * volume format.
  */
 #include <hfs/hfs_format.h>
+#if LINUX
+#include <endian.h>
+#include <byteswap.h>
+#else
 #include <libkern/OSByteOrder.h>
+#endif
 
 /*********************/
 /* BIG ENDIAN Macros */

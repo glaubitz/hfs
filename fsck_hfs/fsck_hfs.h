@@ -23,6 +23,9 @@
 
 #include "cache.h"
 
+#if LINUX
+#include <bsd/bsd.h>
+#endif
 
 const extern char	*cdevname;		/* name of device being checked */
 extern char	*progname;

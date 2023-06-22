@@ -32,7 +32,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if !LINUX
 #include <libkern/OSByteOrder.h>
+#else
+#include "missing.h"
+#endif
 #include <hfs/hfs_format.h>
 
 #include "Scavenger.h"
