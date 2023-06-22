@@ -299,7 +299,7 @@ OSStatus	ExtendBTree	(BTreeControlBlockPtr	btreePtr,
 	} while ( ((BTNodeDescriptor*)mapNode.buffer)->fLink != 0 );
 
 	if (DEBUG_BUILD && totalMapBits != CalcMapBits (btreePtr))
-		Panic ("\pExtendBTree: totalMapBits != CalcMapBits");
+		Panic ("ExtendBTree: totalMapBits != CalcMapBits");
 		
 	/////////////////////// Extend LEOF If Necessary ////////////////////////////
 
@@ -396,7 +396,7 @@ OSStatus	ExtendBTree	(BTreeControlBlockPtr	btreePtr,
 			
 			if (DEBUG_BUILD && mapSize != M_MapRecordSize (btreePtr->nodeSize) )
 			{
-				Panic ("\pExtendBTree: mapSize != M_MapRecordSize");
+				Panic ("ExtendBTree: mapSize != M_MapRecordSize");
 			}
 			
 			mapBits		= mapSize << 3;		// mapSize (in bytes) * 8

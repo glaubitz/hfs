@@ -1484,9 +1484,9 @@ static int ScavTerm( SGlobPtr GPtr )
 	return( noErr );
 }
 
-#define BLUE_BOX_SHARED_DRVR_NAME "\p.BlueBoxShared"
-#define BLUE_BOX_FLOPPY_WHERE_STRING "\pdisk%d (Shared)"
-#define SONY_DRVR_NAME "\p.Sony"
+#define BLUE_BOX_SHARED_DRVR_NAME ".BlueBoxShared"
+#define BLUE_BOX_FLOPPY_WHERE_STRING "disk%d (Shared)"
+#define SONY_DRVR_NAME ".Sony"
 
 /*------------------------------------------------------------------------------
 

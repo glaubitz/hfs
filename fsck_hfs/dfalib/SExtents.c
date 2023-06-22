@@ -1079,7 +1079,7 @@ OSErr TruncateFileC (
 	eofSectors = nextBlock * sectorsPerBlock;					// rounded up to multiple of block size
 	if ((fcb->fcbFlags & fcbLargeFileMask) == 0 && eofSectors >= kTwoGigSectors) {
 		#if DEBUG_BUILD
-			DebugStr("\pHFS: Trying to truncate a file to 2GB or more");
+			DebugStr("HFS: Trying to truncate a file to 2GB or more");
 		#endif
 		err = fileBoundsErr;
 		goto ErrorExit;
@@ -1197,7 +1197,7 @@ ErrorExit:
 
 #if DEBUG_BUILD
 	if (err == fxRangeErr)
-		DebugStr("\pAbout to return fxRangeErr");
+		DebugStr("About to return fxRangeErr");
 #endif
 
 	//	[2355121] If we actually deleted extent records, then update the B-tree header
@@ -1528,7 +1528,7 @@ static OSErr ExtentsToExtDataRec(
 
 	#if DEBUG_BUILD
 		if (oldExtents[3].startBlock || oldExtents[3].blockCount) {
-			DebugStr("\pExtentRecord with > 3 extents is invalid for HFS");
+			DebugStr("ExtentRecord with > 3 extents is invalid for HFS");
 			err = fsDSIntErr;
 		}
 	#endif
@@ -1559,7 +1559,7 @@ static OSErr SetFCBExtentRecord(
 
 	#if DEBUG_BUILD
 		if (fcb->fcbVolume != vcb)
-			DebugStr("\pVCB does not match FCB");
+			DebugStr("VCB does not match FCB");
 	#endif
 
 	if (vcb->vcbSignature == kHFSPlusSigWord)

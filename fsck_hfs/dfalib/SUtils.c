@@ -592,7 +592,7 @@ void ClearMemory( void* start, UInt32 length )
 
 	#if DEBUG_BUILD
 	  if ( length < 4 )
-		 DebugStr("\p ClearMemory: length < 4");
+		 DebugStr("ClearMemory: length < 4");
 	#endif
 
 	// fix up beginning to get us on a 64 byte boundary
@@ -600,7 +600,7 @@ void ClearMemory( void* start, UInt32 length )
 	
 	#if DEBUG_BUILD
 	  if ( fragCount < 4 && fragCount > 0 )
-		  DebugStr("\p ClearMemory: fragCount < 4");
+		  DebugStr("ClearMemory: fragCount < 4");
 	#endif
 	
 	if ( fragCount )

@@ -322,7 +322,7 @@ OSStatus	FindIteratorPosition	(BTreeControlBlockPtr	 btreePtr,
 		{
 			nodeNum = ((NodeDescPtr) left->buffer)->fLink;
 			
-			PanicIf (index != 0, "\pFindIteratorPosition: index != 0");	//ее just checking...
+			PanicIf (index != 0, "FindIteratorPosition: index != 0");	//ее just checking...
 			goto SuccessfulExit;
 		}
 		else
@@ -536,7 +536,7 @@ OSStatus	TrySimpleReplace		(BTreeControlBlockPtr	 btreePtr,
 		didItFit = InsertKeyRecord (btreePtr, nodePtr, index,
 										&iterator->key, KeyLength(btreePtr, &iterator->key),
 										record->bufferAddress, recordLen);
-		PanicIf (didItFit == false, "\pTrySimpleInsert: InsertKeyRecord returned false!");
+		PanicIf (didItFit == false, "TrySimpleInsert: InsertKeyRecord returned false!");
 
 		*recordInserted = true;
 	}

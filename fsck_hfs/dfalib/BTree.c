@@ -387,7 +387,7 @@ OSStatus	BTOpenPath			(SFCB					*filePtr,
 	btreePtr = (BTreeControlBlock*) AllocateClearMemory( sizeof( BTreeControlBlock ) );
 	if (btreePtr == nil)
 	{
-		Panic ("\pBTOpen: no memory for btreePtr.");
+		Panic ("BTOpen: no memory for btreePtr.");
 		return	memFullErr;
 	}
 
@@ -414,7 +414,7 @@ OSStatus	BTOpenPath			(SFCB					*filePtr,
 						kGetBlock,
 						&nodeRec );
 
-	PanicIf (err != noErr, "\pBTOpen: getNodeProc returned error getting header node.");
+	PanicIf (err != noErr, "BTOpen: getNodeProc returned error getting header node.");
 	M_ExitOnError (err);
 
 	header = (BTHeaderRec*) (nodeRec.buffer + sizeof(BTNodeDescriptor));
@@ -428,7 +428,7 @@ OSStatus	BTOpenPath			(SFCB					*filePtr,
 
 	///////////////////// Initalize fields from header //////////////////////////
 	
-	PanicIf ( (filePtr->fcbVolume->vcbSignature != 0x4244) && (btreePtr->nodeSize == 512), "\p BTOpenPath: wrong node size for HFS+ volume!");
+	PanicIf ( (filePtr->fcbVolume->vcbSignature != 0x4244) && (btreePtr->nodeSize == 512), "BTOpenPath: wrong node size for HFS+ volume!");
 
 	btreePtr->treeDepth			= header->treeDepth;
 	btreePtr->rootNode			= header->rootNode;
@@ -786,7 +786,7 @@ OSStatus	BTSearchRecord		(SFCB						*filePtr,
 
 			recordSize = record->itemCount * record->itemSize;
 			
-			PanicIf(len > recordSize, "\pBTSearchRecord: truncating record!");
+			PanicIf(len > recordSize, "BTSearchRecord: truncating record!");
 
 			if (len > recordSize)	len = recordSize;
 
@@ -1066,7 +1066,7 @@ CopyData:
 
 		recordSize = record->itemCount * record->itemSize;
 
-		PanicIf(len > recordSize, "\pBTIterateRecord: truncating record!");
+		PanicIf(len > recordSize, "BTIterateRecord: truncating record!");
 	
 		if (len > recordSize)	len = recordSize;
 

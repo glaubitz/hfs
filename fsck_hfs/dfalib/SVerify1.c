@@ -1961,7 +1961,7 @@ OSErr CatHChk( SGlobPtr GPtr )
 			//	Unknown/Bad record type
 			else
 			{
-				M_DebugStr("\p Unknown-Bad record type");
+				M_DebugStr("Unknown-Bad record type");
 				return( 123 );
 			}
 		} 

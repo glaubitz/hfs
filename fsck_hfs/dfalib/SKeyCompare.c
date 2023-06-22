@@ -335,9 +335,9 @@ SInt32 CompareExtentKeys( const HFSExtentKey *searchKey, const HFSExtentKey *tri
 	
 	#if DEBUG_BUILD
 		if (searchKey->keyLength != kHFSExtentKeyMaximumLength)
-			DebugStr("\pHFS: search Key is wrong length");
+			DebugStr("HFS: search Key is wrong length");
 		if (trialKey->keyLength != kHFSExtentKeyMaximumLength)
-			DebugStr("\pHFS: trial Key is wrong length");
+			DebugStr("HFS: trial Key is wrong length");
 	#endif
 	
 	result = -1;		//	assume searchKey < trialKey
@@ -398,9 +398,9 @@ SInt32 CompareExtentKeysPlus( const HFSPlusExtentKey *searchKey, const HFSPlusEx
 	
 	#if DEBUG_BUILD
 		if (searchKey->keyLength != kHFSPlusExtentKeyMaximumLength)
-			DebugStr("\pHFS: search Key is wrong length");
+			DebugStr("HFS: search Key is wrong length");
 		if (trialKey->keyLength != kHFSPlusExtentKeyMaximumLength)
-			DebugStr("\pHFS: trial Key is wrong length");
+			DebugStr("HFS: trial Key is wrong length");
 	#endif
 	
 	result = -1;		//	assume searchKey < trialKey

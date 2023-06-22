@@ -736,7 +736,7 @@ static OSErr BlockMarkAllocated(
 		}
 #if DEBUG_BUILD
 		if ((*currentWord & SWAP_BE32(bitMask)) != 0) {
-			DebugStr("\pFATAL: blocks already allocated!");
+			DebugStr("FATAL: blocks already allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}
@@ -773,7 +773,7 @@ static OSErr BlockMarkAllocated(
 		}
 #if DEBUG_BUILD
 		if (*currentWord != 0) {
-			DebugStr("\pFATAL: blocks already allocated!");
+			DebugStr("FATAL: blocks already allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}
@@ -810,7 +810,7 @@ static OSErr BlockMarkAllocated(
 		}
 #if DEBUG_BUILD
 		if ((*currentWord & SWAP_BE32(bitMask)) != 0) {
-			DebugStr("\pFATAL: blocks already allocated!");
+			DebugStr("FATAL: blocks already allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}
@@ -904,7 +904,7 @@ static OSErr BlockMarkFree(
 		}
 #if DEBUG_BUILD
 		if ((*currentWord & SWAP_BE32(bitMask)) != SWAP_BE32(bitMask)) {
-			DebugStr("\pFATAL: blocks not allocated!");
+			DebugStr("FATAL: blocks not allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}
@@ -940,7 +940,7 @@ static OSErr BlockMarkFree(
 		}
 #if DEBUG_BUILD
 		if (*currentWord != kAllBitsSetInWord) {
-			DebugStr("\pFATAL: blocks not allocated!");
+			DebugStr("FATAL: blocks not allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}
@@ -977,7 +977,7 @@ static OSErr BlockMarkFree(
 		}
 #if DEBUG_BUILD
 		if ((*currentWord & SWAP_BE32(bitMask)) != SWAP_BE32(bitMask)) {
-			DebugStr("\pFATAL: blocks not allocated!");
+			DebugStr("FATAL: blocks not allocated!");
 			err = fsDSIntErr;
 			goto Exit;
 		}

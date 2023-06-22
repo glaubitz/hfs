@@ -124,7 +124,7 @@ OSStatus	GetNode		(BTreeControlBlockPtr	 btreePtr,
 	//ее is nodeNum within proper range?
 	if( nodeNum >= btreePtr->totalNodes )
 	{
-		Panic("\pGetNode:nodeNum >= totalNodes");
+		Panic("GetNode:nodeNum >= totalNodes");
 		if (debug) fprintf(stderr, "%s(%d):  nodeNum %u > totalNodes %u\n", __FUNCTION__, __LINE__, nodeNum, btreePtr->totalNodes);
 		err = fsBTInvalidNodeErr;
 		goto ErrorExit;
@@ -138,7 +138,7 @@ OSStatus	GetNode		(BTreeControlBlockPtr	 btreePtr,
 
 	if (err != noErr)
 	{
-		Panic ("\pGetNode: getNodeProc returned error.");
+		Panic ("GetNode: getNodeProc returned error.");
 		nodePtr->buffer = nil;
 		goto ErrorExit;
 	}
@@ -202,7 +202,7 @@ OSStatus	GetNewNode	(BTreeControlBlockPtr	 btreePtr,
 					   
 	if (err != noErr)
 	{
-		Panic ("\pGetNewNode: getNodeProc returned error.");
+		Panic ("GetNewNode: getNodeProc returned error.");
 		returnNodePtr->buffer = nil;
 		return err;
 	}
@@ -263,7 +263,7 @@ OSStatus	ReleaseNode	(BTreeControlBlockPtr	 btreePtr,
 		err = releaseNodeProc (btreePtr->fcbPtr,
 							   nodePtr,
 							   options );
-		PanicIf (err, "\pReleaseNode: releaseNodeProc returned error.");
+		PanicIf (err, "ReleaseNode: releaseNodeProc returned error.");
 		++btreePtr->numReleaseNodes;
 	}
 	
@@ -305,7 +305,7 @@ OSStatus	TrashNode	(BTreeControlBlockPtr	 btreePtr,
 		err = releaseNodeProc (btreePtr->fcbPtr,
 							   nodePtr,
 							   kReleaseBlock | kTrashBlock );
-		PanicIf (err, "\pTrashNode: releaseNodeProc returned error.");
+		PanicIf (err, "TrashNode: releaseNodeProc returned error.");
 		++btreePtr->numReleaseNodes;
 	}
 
